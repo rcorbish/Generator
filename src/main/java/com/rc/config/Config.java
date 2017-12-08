@@ -30,6 +30,11 @@ public class Config {
     final static Logger log = LoggerFactory.getLogger(Config.class);
     final Path configFile;
 
+    private Source source ;
+    private Trigger trigger ;
+    private Sink sink  ;
+    private Transformer transformer ;
+
     public Config(Path configFile) {
         this.configFile = configFile;
     }
@@ -39,15 +44,13 @@ public class Config {
 
         parseConfigFile() ;
 
-        Source source = new FileSource(Paths.get("/etc/passwd"), ":");
-        Trigger trigger = new TimeTrigger(20, 0, TimeZone.getDefault(), Calendar.SUNDAY);
-
+        if( source == null ) throw new ParseException("No source found", -1) ;
+        if( sink == null ) throw new ParseException("No sink found", -1) ;
+        if( transformer == null ) throw new ParseException("No transformer found", -1) ;
         Processor rc = new Processor(configFile.getFileName().toString(), source, trigger);
-
-        Sink sink = new FileSink(Paths.get("/tmp/xxx"));
-        Transformer transformer = new Passthrough(sink);
-
+        transformer.sink = sink ;
         rc.addTransformer(transformer);
+ 
         return rc;
     }
 
@@ -58,6 +61,7 @@ public class Config {
         Map<String,String> values = new LinkedHashMap<>() ;
         
         log.info("Parsing config file {}", configFile ) ;
+
 
         try( BufferedReader rdr = Files.newBufferedReader( configFile ) ) {
             // Gson gson = new GsonBuilder().setLenient().create() ;
@@ -94,14 +98,55 @@ public class Config {
             } 
             processSection( section, values ) ;
         } catch (IOException iex) {
+            log.error( "Can't create processor: ", iex ) ;
             rc = null;
         }
         return rc;
     }
 
-    public void processSection( String sectionName, Map<String,String> values ) {
+    public void processSection( String sectionName, Map<String,String> values ) throws IOException, ParseException {
         if( sectionName !=null ) {
             log.info( "Processed {} using {}", sectionName, values ) ;
+
+            if( "source".equals( sectionName ) ) {
+                processSource( values ) ;
+            }
+            if( "sink".equals( sectionName ) ) {
+                processSink( values ) ;
+            }
+            if( "transformer".equals( sectionName ) ) {
+                processTransformer( values ) ;
+            }
+            if( "trigger".equals( sectionName ) ) {
+                processTrigger( values ) ;
+            }
         }
+    }
+
+    public void processSource(  Map<String,String> values ) throws IOException, ParseException {
+        source = new FileSource(Paths.get("/etc/passwd"), ":");
+    }
+    public void processSink(  Map<String,String> values ) throws IOException, ParseException  {
+        Path output = null ;
+        String fileName = values.get( "file" ) ;
+        if( fileName != null ) {
+            output = FileSink.getFileNameFromFile(fileName) ;
+        }
+        String dirName = values.get( "dir" ) ;
+        if( dirName != null ) {
+            if( fileName != null ) {
+                throw new ParseException("Don't use file and dir in the same config", -1) ;
+            }
+            output = FileSink.getFileNameFromDir(dirName) ;
+        }
+        if( output != null ) {
+            sink = new FileSink( Paths.get( fileName ) ) ;
+        }
+    }
+    public void processTransformer(  Map<String,String> values ) throws IOException, ParseException  {
+        transformer = new Passthrough() ;       
+    }
+    public void processTrigger(  Map<String,String> values ) throws IOException {
+        trigger = new TimeTrigger(20, 0, TimeZone.getDefault(), Calendar.SUNDAY);
     }
 }

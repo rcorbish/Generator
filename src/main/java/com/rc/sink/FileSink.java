@@ -5,6 +5,7 @@ import java.io.BufferedWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -19,10 +20,10 @@ public class FileSink implements Sink {
     
 	private BufferedWriter out ;
 
-	final private Path outputDirectory ;
-    public FileSink( Path outputDirectory ) throws IOException {
-		this.outputDirectory = outputDirectory ;
-		Files.createDirectories( outputDirectory ) ;
+	final private Path output ;
+
+	public FileSink( Path outputDirectory ) throws IOException {
+		this.output = outputDirectory ;
 	}
 
 	static Path MostRecentFile( Path a, Path b ) {
@@ -35,29 +36,14 @@ public class FileSink implements Sink {
 		return null ;
 	}
 
-	private Path getFileName() throws IOException {
-		Optional<Path> p = Files.list( outputDirectory ).reduce( (a,b) -> FileSink.MostRecentFile(a,b) ) ;
-		log.info( "Found most recent file: {}", p.isPresent()?p.get():"-" ) ;
-		int sequenceNum = 0 ;
-		if( p.isPresent() ) {
-			try {
-				String fn = p.get().getFileName().toString() ;
-				int ix = fn.lastIndexOf('.') ;
-				sequenceNum = Integer.parseInt( fn.substring(ix+1) ) ;
-			} catch( Throwable t ) {
-			}
-		}
-		sequenceNum++ ;
-		return outputDirectory.resolve( String.format( "%04d", sequenceNum) ) ;
-	}
 
     public void header( String data ) {
     	try {	
-            out = Files.newBufferedWriter( getFileName() ) ;
+            out = Files.newBufferedWriter( output ) ;
 			out.append( data ) ;
 			out.newLine() ;
 		} catch (IOException e) {
-			log.error( "Failed to write header to ()", outputDirectory, e ) ;
+			log.error( "Failed to write header to ()", output, e ) ;
 		}
     }
     
@@ -70,7 +56,7 @@ public class FileSink implements Sink {
 			) ;
 			out.newLine() ;
 		} catch (IOException e) {
-			log.error( "Failed to write data to ()", outputDirectory, e  ) ;
+			log.error( "Failed to write data to ()", output, e  ) ;
 		}
     }
     
@@ -81,7 +67,38 @@ public class FileSink implements Sink {
 	    	out.close();
 	    	out = null ;
 		} catch (IOException e) {
-			log.error( "Failed to write footer to ()", outputDirectory, e ) ;
+			log.error( "Failed to write footer to ()", output, e ) ;
 		}
     }
+
+
+	public static Path getFileNameFromFile( String fileName ) throws IOException {
+		Path output = Paths.get( fileName ) ;		
+		Files.createDirectories( output.getParent() ) ;
+		if( Files.isDirectory(output) ) {
+			throw new IOException( "File " + fileName + " exists as directory" ) ;
+		}
+		return output ;
+	}
+
+	public static Path getFileNameFromDir( String fileName ) throws IOException {
+		Path output = Paths.get( fileName ) ;		
+		Files.createDirectories( output ) ;
+		Optional<Path> p = Files.list( output ).reduce( (a,b) -> FileSink.MostRecentFile(a,b) ) ;
+		log.info( "Found most recent file: {}", p.isPresent()?p.get():"-" ) ;
+		int sequenceNum = 0 ;
+		if( p.isPresent() ) {
+			try {
+				String fn = p.get().getFileName().toString() ;
+				int ix = fn.lastIndexOf('.') ;
+				sequenceNum = Integer.parseInt( fn.substring(ix+1) ) ;
+			} catch( Throwable t ) {
+			}
+		}
+		sequenceNum++ ;
+		Path rc = output.resolve( String.format( "%04d", sequenceNum) ) ;
+		log.info( "Creating new {} in output directory {}", rc.getFileName(), output ) ;
+		return rc ;
+	}
+
 }

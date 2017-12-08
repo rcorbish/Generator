@@ -6,13 +6,10 @@ import java.util.Date;
 import com.rc.sink.Sink;
 
 public class Passthrough extends Transformer {
-
-	final private Sink sink ;	
 	
 	private int numberOfLinesProcessed ;
 	
-	public Passthrough( Sink sink ) {
-		this.sink = sink ;
+	public Passthrough() {
 		numberOfLinesProcessed = 0 ;
 	}
 	

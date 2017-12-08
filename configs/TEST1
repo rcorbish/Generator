@@ -1,19 +1,20 @@
 [trigger]
-    time 20:00 
-    region NY 
-    days Mon,Wed,Fri
+    time        20:00 
+    region      NY 
+    days        Mon,Wed,Fri
 
 [source]
-    sql select * from dm.trade
+    sql         select * from dm.trade
+    connection 
 
 [sink]
-    file /tmp/position-sink.txt
+    file        /tmp/xxx
 
 [transformer]
-    unchanged
+    passthrough
 
 [done]
-    exec rapi /tmp/position-sink.txt
+    exec        rapi /tmp/position-sink.txt
 
 [error]
     log
