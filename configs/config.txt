@@ -1,0 +1,21 @@
+[positions]
+ 
+[trigger]
+    time 20:00 
+    region NY 
+    days Mon,Wed,Fri
+
+[source]
+    sql select * from dm.trade
+
+[sink]
+    file /tmp/position-sink.txt
+
+[transformer]
+    unchanged
+
+[done]
+    exec rapi /tmp/position-sink.txt
+
+[error]
+    log
