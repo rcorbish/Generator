@@ -7,8 +7,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Optional;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,10 +34,30 @@ public class FileSink implements Sink {
 		return null ;
 	}
 
-
-    public void header( String data ) {
+	@Override
+	public void start() {
     	try {	
-            out = Files.newBufferedWriter( output ) ;
+    		out = Files.newBufferedWriter( output ) ;
+		} catch (IOException e) {
+			log.error( "Failed to open () for writing.", output, e ) ;
+		}
+	}
+	
+	@Override
+	public void finish() {
+    	try {	
+	    	out.flush(); 
+	    	out.close();
+	    	out = null ;
+		} catch (IOException e) {
+			log.error( "Failed to close ().", output, e ) ;
+		}
+	}
+	
+	
+	@Override
+    public void header( CharSequence data ) {
+    	try {	
 			out.append( data ) ;
 			out.newLine() ;
 		} catch (IOException e) {
@@ -47,25 +65,20 @@ public class FileSink implements Sink {
 		}
     }
     
-    public void consume( Object data[] ) {
+	@Override
+    public void consume( CharSequence data ) {
     	try {
-			out.append( 
-				Stream.of( data )
-				.map( e -> e==null ? "" : e.toString() )
-				.collect( Collectors.joining( "','", "'", "'" ) ) 
-			) ;
+			out.append( data ) ;
 			out.newLine() ;
 		} catch (IOException e) {
 			log.error( "Failed to write data to ()", output, e  ) ;
 		}
     }
     
-    public void footer( String data ) {
+	@Override
+    public void footer( CharSequence data ) {
     	try {
 			out.append( data ) ;
-	    	out.flush(); 
-	    	out.close();
-	    	out = null ;
 		} catch (IOException e) {
 			log.error( "Failed to write footer to ()", output, e ) ;
 		}

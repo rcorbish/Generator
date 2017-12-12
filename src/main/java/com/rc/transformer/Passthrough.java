@@ -2,8 +2,7 @@
 package com.rc.transformer ;
 
 import java.util.Date;
-
-import com.rc.sink.Sink;
+import java.util.StringJoiner;
 
 public class Passthrough extends Transformer {
 	
@@ -16,8 +15,12 @@ public class Passthrough extends Transformer {
     @Override
     public void process( Object data[] ) {
     	numberOfLinesProcessed++ ;
-        sink.consume( data ) ;
-    }
+
+    	StringJoiner sj = new StringJoiner( "," ) ;
+    	for( int i=0 ; i<data.length ; i++ ) {
+   			sj.add( data[i] == null ? "" : data[i].toString() ) ;
+    	}
+    	sink.consume( sj.toString() );    }
 
 	@Override
 	public void  preProcess() {

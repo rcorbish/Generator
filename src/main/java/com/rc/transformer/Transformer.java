@@ -10,9 +10,11 @@ abstract public class Transformer {
     public Sink sink ;
 
     public final void process( Stream<Object[]> data ) {
+    	sink.start() ;
     	preProcess() ;
     	data.forEach( this::process ) ;
     	postProcess() ;
+    	sink.finish() ;
     }
 
     abstract public void process( Object data[] ) ;

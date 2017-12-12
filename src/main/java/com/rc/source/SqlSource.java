@@ -22,6 +22,8 @@ public class SqlSource implements Source {
     private final Connection connection ;
     private final PreparedStatement stmt ;
     private final ResultSet rs ;
+    private final int numColumns ;
+    private final String columns[] ;
     
     public SqlSource( String connectionString, 
                         String userName, 
@@ -34,13 +36,19 @@ public class SqlSource implements Source {
             stmt.setObject( i+1, args[i] ) ;
         }
         rs = stmt.executeQuery() ;
+        
+        numColumns = rs.getMetaData().getColumnCount() ;
+        columns = new String[ numColumns ] ;
+        for( int i=0 ; i<numColumns ; i++ ) {
+        	columns[i] = rs.getMetaData().getColumnLabel(i) ;
+        }
     }
 
     @Override
     public Stream<Object[]> get() {
         Stream<Object[]> rc = null ;
         try {
-            ResultsetSpliterator rss = new ResultsetSpliterator( rs ) ;
+            ResultsetSpliterator rss = new ResultsetSpliterator( rs, numColumns ) ;
             rc = StreamSupport.stream( rss, false );
         } catch( SQLException sex ) {
             log.error( "Error geting SQL data", sex ) ;
@@ -63,10 +71,10 @@ public class SqlSource implements Source {
         private final ResultSet rs ;
         private final int numColumns ;
 
-        ResultsetSpliterator( ResultSet rs ) throws SQLException {
+        ResultsetSpliterator( ResultSet rs, int numColumns ) throws SQLException {
             super( 0L, 0 ) ;
             this.rs = rs ;
-            numColumns = rs.getMetaData().getColumnCount() ;
+            this.numColumns = numColumns ;
         }
 
         @Override
@@ -85,4 +93,9 @@ public class SqlSource implements Source {
             return rc ;
         }
     }
+
+	@Override
+	public String[] getColumns() {
+		return null;
+	}
 }

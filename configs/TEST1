@@ -4,14 +4,16 @@
     days        Mon,Wed,Fri
 
 [source]
+    file		/etc/passwd
+    separator	:
     sql         select * from dm.trade
-    connection 
 
 [sink]
-    file        /tmp/xxx
+    file		/tmp/xxx
 
 [transformer]
-    passthrough
+    type		mapping
+    COL1		root
 
 [done]
     exec        rapi /tmp/position-sink.txt
