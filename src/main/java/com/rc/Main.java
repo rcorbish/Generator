@@ -19,6 +19,15 @@ import com.rc.config.Parser;
 import joptsimple.OptionParser;
 import joptsimple.OptionSet;
 
+/**
+ * Main class starts the app
+ * 
+ * Use --help to see command line options
+ * 
+ * If an exec is given the process executes it, then terminates
+ * If no execs are provided, the app starts the web service
+ * and waits for triggers to fire to initiate execution
+ */
 public class Main {
 	final private static Logger log = LoggerFactory.getLogger(Main.class);
 
@@ -68,6 +77,11 @@ public class Main {
 	}
 }
 
+
+/**
+ * Private class to hold the command line options passed in
+ * at runtime.
+ */
 class Options {
 
 	int port = 8111;

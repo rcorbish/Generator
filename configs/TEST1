@@ -18,7 +18,7 @@
     COL3        gid
     COL4        shell
     <parent>
-    COL2        row_num
+    COL2        row_num 
     COL4        Date.now()
     COL3		"Boo Ya"
     <pay>

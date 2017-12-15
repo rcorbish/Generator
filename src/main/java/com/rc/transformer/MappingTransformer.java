@@ -109,7 +109,7 @@ public class MappingTransformer extends Transformer {
 				}
 				
 				// Create a new mapper based on the javascript in the value
-				String script = "var obj={ process : function( data ) { return " + val + " ; } }" ;
+				String script = "var obj={ process : function( data ) { return String( " + val + ") ; } }" ;
 				engine.eval( script, bindings ) ;
 				Object obj = engine.get( "obj" ) ;
 				Mapper mapper = ((Invocable)engine).getInterface( obj, Mapper.class ) ;
@@ -147,7 +147,7 @@ public class MappingTransformer extends Transformer {
 		for( List<Mapper> mappers : mapperSet ) {
 			StringBuilder sb = new StringBuilder("\"") ;
 			for( Mapper mapper : mappers ) {
-				String colValue = mapper.process( data ) ;
+				CharSequence colValue = mapper.process( data ) ;
 				sb.append( "|\"").append( colValue ).append( "\"" ) ;
 			}
             rc[csIndex] = sb ;
