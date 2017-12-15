@@ -4,11 +4,12 @@
     days        Mon,Wed,Fri
 
 [source]
+    file		/etc/passwd
+    separator	:
     sql         select * from dm.trade
-    connection 
 
 [sink]
-    file        /tmp/xxx
+    file		/tmp/xxx
 
 [transformer]
     mapping
