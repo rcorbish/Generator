@@ -5,6 +5,7 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.Spliterators.AbstractSpliterator;
 import java.util.function.Consumer;
@@ -22,6 +23,8 @@ public class SqlSource implements Source {
     private final Connection connection ;
     private final PreparedStatement stmt ;
     private final ResultSet rs ;
+    private final String columnNames[] ;
+    private final int numColumns ;
     
     public SqlSource( String connectionString, 
                         String userName, 
@@ -34,13 +37,19 @@ public class SqlSource implements Source {
             stmt.setObject( i+1, args[i] ) ;
         }
         rs = stmt.executeQuery() ;
+        ResultSetMetaData rsmd = rs.getMetaData() ;
+        numColumns = rsmd.getColumnCount() ;
+        columnNames = new String[ numColumns ] ;
+        for( int i=0 ; i<columnNames.length ; i++ ) {
+        	columnNames[i] = rsmd.getColumnLabel( i+1 ) ;
+        }
     }
 
     @Override
     public Stream<Object[]> get() {
         Stream<Object[]> rc = null ;
         try {
-            ResultsetSpliterator rss = new ResultsetSpliterator( rs ) ;
+            ResultsetSpliterator rss = new ResultsetSpliterator() ;
             rc = StreamSupport.stream( rss, false );
         } catch( SQLException sex ) {
             log.error( "Error geting SQL data", sex ) ;
@@ -48,6 +57,11 @@ public class SqlSource implements Source {
         return rc ;
     }
 
+    @Override
+    public String []columnNames() {
+    	return columnNames ;
+    }
+    
     public void close() {
         try {
             rs.close(); 
@@ -58,15 +72,10 @@ public class SqlSource implements Source {
         }
     }
 
-    static class ResultsetSpliterator extends AbstractSpliterator<Object[]> {
+    class ResultsetSpliterator extends AbstractSpliterator<Object[]> {
         
-        private final ResultSet rs ;
-        private final int numColumns ;
-
-        ResultsetSpliterator( ResultSet rs ) throws SQLException {
-            super( 0L, 0 ) ;
-            this.rs = rs ;
-            numColumns = rs.getMetaData().getColumnCount() ;
+        ResultsetSpliterator() throws SQLException {
+            super( 0L, IMMUTABLE ) ;
         }
 
         @Override
@@ -84,5 +93,5 @@ public class SqlSource implements Source {
             }
             return rc ;
         }
-    }
+    }    
 }

@@ -11,10 +11,22 @@
     file        /tmp/xxx
 
 [transformer]
-    passthrough
-
-[done]
-    exec        rapi /tmp/position-sink.txt
-
-[error]
-    log
+    mapping
+    <column-names>
+    COL1 		root
+    COL2        in2
+    COL3        in3
+    COL4        
+    <parent>
+    COL2        row_num
+    COL4        Date.now()
+    COL3		"Boo Ya"
+    <pay>
+    COL1        row_num+"-pay"
+    COL4        Date.now()
+    COL2		"Pay"
+    <receive>
+    COL1        row_num+"-rcv"
+    COL4        Date.now()
+    COL2		"Receive"
+    

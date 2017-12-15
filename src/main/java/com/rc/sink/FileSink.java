@@ -37,7 +37,8 @@ public class FileSink implements Sink {
 	}
 
 
-    public void header( String data ) {
+    @Override
+    public void header( CharSequence data ) {
     	try {	
             out = Files.newBufferedWriter( output ) ;
 			out.append( data ) ;
@@ -47,20 +48,18 @@ public class FileSink implements Sink {
 		}
     }
     
-    public void consume( Object data[] ) {
+    @Override
+    public void consume( CharSequence data ) {
     	try {
-			out.append( 
-				Stream.of( data )
-				.map( e -> e==null ? "" : e.toString() )
-				.collect( Collectors.joining( "','", "'", "'" ) ) 
-			) ;
+			out.append( data ) ;
 			out.newLine() ;
 		} catch (IOException e) {
 			log.error( "Failed to write data to ()", output, e  ) ;
 		}
     }
     
-    public void footer( String data ) {
+    @Override
+    public void footer( CharSequence data ) {
     	try {
 			out.append( data ) ;
 	    	out.flush(); 

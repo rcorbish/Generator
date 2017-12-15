@@ -20,7 +20,7 @@ import joptsimple.OptionParser;
 import joptsimple.OptionSet;
 
 public class Main {
-	final static Logger log = LoggerFactory.getLogger(Main.class);
+	final private static Logger log = LoggerFactory.getLogger(Main.class);
 
 	public static void main(String[] args) {
 		Options options = new Options(args);
