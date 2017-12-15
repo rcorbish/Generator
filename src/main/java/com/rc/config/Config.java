@@ -107,7 +107,7 @@ public class Config {
                             ix++;
                         }
                         String subtransform = line.substring(1, ix).trim() ;
-                        log.info("Processing subsection {}", subtransform ) ;
+                        log.debug("Processing subsection {}", subtransform ) ;
                         values = new LinkedHashMap<>() ;
                         valueList.put( subtransform, values ) ;
                     } else if ( line.charAt(0)=='"' || line.charAt(0)=='\"' ) {
@@ -118,7 +118,7 @@ public class Config {
                         key = line.substring(1, ix).trim();
                         value = line.substring(ix+1).trim();
                         values.put(key, value);
-                        log.info( "added {}", key ) ;
+                        log.debug( "added {}", key ) ;
                     } else {
                         while (ix < line.length() && !Character.isWhitespace(line.charAt(ix))) {
                             ix++;
@@ -126,7 +126,7 @@ public class Config {
                         key = line.substring(0, ix).trim();
                         value = line.substring(ix).trim();
                         values.put(key, value);
-                        log.info( "added {}", key ) ;
+                        log.debug( "added {}", key ) ;
                     }
                     line = "";
                 }
@@ -160,7 +160,9 @@ public class Config {
     }
 
     public void processSource(Map<String, String> values) throws IOException, ParseException {
-        source = new FileSource(Paths.get("/etc/passwd"), ":");
+        source = new FileSource(Paths.get("/etc/passwd"), 
+                        ":", 
+                        new String[]{ "user", "x", "uid", "gid", "name","home", "shell" } );
     }
 
     public void processSink(Map<String, String> values) throws IOException, ParseException {

@@ -15,13 +15,13 @@ public class Passthrough extends Transformer {
 	}
 	
     @Override
-    public void process( Object data[] ) {
+    public CharSequence[] convert( Object data[] ) {
     	numberOfLinesProcessed++ ;
     	StringJoiner sj = new StringJoiner( "," ) ;
     	for( Object o : data ) {
     		sj.add( o==null ? "" : o.toString() ) ;
     	}
-        sink.consume( sj.toString() ) ;
+        return new CharSequence[] { sj.toString() } ;
     }
 
 	@Override

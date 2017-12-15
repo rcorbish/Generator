@@ -15,7 +15,15 @@ abstract public class Transformer {
     	postProcess() ;
     }
 
-    abstract public void process( Object data[] ) ;
+
+    public void process( Object data[] ) {
+        for( CharSequence cs : convert( data ) ) {
+            sink.consume( cs ) ;
+        }
+    }
+ 
+    abstract public CharSequence[] convert( Object data[] ) ;
+    
     abstract public void preProcess() ;
     abstract public void postProcess() ;
     
