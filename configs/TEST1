@@ -15,12 +15,16 @@
     a           1
     b           hello
 
+[extern]
+<function1>
+    script      return data[0].length / 1000
+
 [transformer]
     mapping
     <column-names>
     COL1 		root
     COL2        in2
-    COL3        in3
+    COL3        @function1
     COL4        
     <parent>
     COL2        row_num
@@ -28,7 +32,7 @@
     COL3		"Boo Ya"
     <pay>
     COL1        row_num+"-pay"
-    COL4        Date.now()
+    COL4        @function1
     COL2		"Pay"
     <receive>
     COL1        row_num+"-rcv"

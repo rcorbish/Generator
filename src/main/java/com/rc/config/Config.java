@@ -13,6 +13,12 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.TimeZone;
 
+import javax.script.Bindings;
+import javax.script.Invocable;
+import javax.script.ScriptContext;
+import javax.script.ScriptEngine;
+import javax.script.ScriptEngineManager;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,6 +30,7 @@ import com.rc.source.Source;
 import com.rc.transformer.MappingTransformer;
 import com.rc.transformer.Passthrough;
 import com.rc.transformer.Transformer;
+import com.rc.transformer.mapper.Mapper;
 import com.rc.trigger.TimeTrigger;
 import com.rc.trigger.Trigger;
 
@@ -33,6 +40,7 @@ public class Config {
     final public static String GLOBAL_TRANSFORM = "" ;
     final public static String COLUMN_NAMES = "column-names" ;
     final public static String LOOKUP_TABLES = "lookup-tables" ;
+    final public static String EXTERN_CLASSeS = "extern" ;
     
     final Path configFile;
 
@@ -41,7 +49,8 @@ public class Config {
     private Sink sink;
     private Transformer transformer;
     private Map<String,Map<String,String>> lookupTables ;
-
+    private Map<String,Mapper> externalClasses ;
+    
     public Config(Path configFile) {
         this.configFile = configFile;
     }
@@ -161,6 +170,9 @@ public class Config {
             if ("lookup-tables".equals(sectionName)) {
                 processLookupTables(valueList);
             }
+            if ("extern".equals(sectionName)) {
+                processExternalClasses(valueList);
+            }
         }
     }
 
@@ -193,7 +205,7 @@ public class Config {
             transformer = new Passthrough();
         }
         if( values.containsKey("mapping" ) ) {
-            transformer = new MappingTransformer( valueList, lookupTables, source.columnNames() ) ;
+            transformer = new MappingTransformer( valueList, lookupTables, externalClasses, source.columnNames() ) ;
         }
     }
 
@@ -210,8 +222,49 @@ public class Config {
         for( String key : valueList.keySet() ) {
             if( GLOBAL_TRANSFORM.equals(key) ) {
                 continue ;
-            }
+            }            
             lookupTables.put( key, (Map<String,String>)valueList.get(key).clone() ) ;
+            // lookupTables.put( key, valueList.get(key) ) ;
+        }
+    }
+
+
+    public void processExternalClasses(Map<String, LinkedHashMap<String,String>> valueList ) throws Exception {
+        // LinkedHashMap<String, String> values = valueList.get( LOOKUP_TABLES ) ;
+        log.info( "Finding externals {}", valueList ) ;
+
+        externalClasses = new HashMap<>() ;
+        for( String key : valueList.keySet() ) {
+            if( GLOBAL_TRANSFORM.equals(key) ) {
+                continue ;
+            } 
+            Map<String,String> cfg = valueList.get( key ) ;
+            
+            Mapper mapperInstance = null ;
+            if( cfg.containsKey( "class" ) ) {
+                String className = cfg.get( "class" ) ;
+                Class<? extends Mapper>clazz = (Class<? extends Mapper>)(Class.forName( className ) ) ;
+                mapperInstance = clazz.newInstance() ;
+            }
+            if( cfg.containsKey( "script" ) ) {
+                final ScriptEngineManager sem ;
+                final ScriptEngine engine ;
+                final Bindings bindings ;
+            
+                sem = new ScriptEngineManager() ;
+                engine = sem.getEngineByName("js") ;
+                bindings = engine.createBindings() ;
+                engine.setBindings(bindings, ScriptContext.ENGINE_SCOPE );
+        
+                String script = "var obj={ process : function( data ) {" + cfg.get( "script" ) +"}}" ;
+                				// Create a new mapper based on the javascript in the value
+				engine.eval( script, bindings ) ;
+				Object obj = engine.get( "obj" ) ;
+				mapperInstance = ((Invocable)engine).getInterface( obj, Mapper.class ) ;
+            }
+            if( mapperInstance != null ) {
+                externalClasses.put( key, mapperInstance ) ;
+            }
         }
     }
 

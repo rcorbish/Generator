@@ -39,6 +39,7 @@ public class MappingTransformer extends Transformer {
 	public MappingTransformer( 
 				Map<String,LinkedHashMap<String,String>> columnsMapping, 
 				Map<String,Map<String,String>> lookupTables, 
+				Map<String,Mapper> externalMappers,
 				String inputColumns[] ) throws Exception {
 
 		CharSequence jsCode = "" ;
@@ -54,13 +55,22 @@ public class MappingTransformer extends Transformer {
 					char s2 = s1 ;
 					if( k.indexOf(s1) >=0 ) s1 = '\"' ;
 					if( v.indexOf(s2) >=0 ) s2 = '\"' ;
-					sb.append( s1 ).append( k ).append( s1 ).append(":").append(s2).append(v).append(s2).append(',') ;
+					sb
+						.append( s1 )
+						.append( k )
+						.append( s1 )
+						.append(":")
+						.append(s2)
+						.append(v)
+						.append(s2)
+						.append(',') 
+						;
 				}
 				sb.setCharAt( sb.length()-1, '}' ) ;
 				sb.append( ';' ) ;
 			}
 			jsCode = sb ;
-			log.debug( "JS map code   {}", sb ) ;
+			log.info( "JS map code   {}", sb ) ;
 		}
 		// Prepare the javascript environment
 		sem = new ScriptEngineManager() ;
@@ -80,8 +90,14 @@ public class MappingTransformer extends Transformer {
 		List<Mapper> defaultMappers = new ArrayList<>() ;
 		for( String key : colNameMap.keySet() ) {
 			String from = colNameMap.get( key ) ;
-			int ix = getInputColumnIndex( inputColumns, from ) ;
-			Mapper mapper = ix<0 ? new EmptyMapper() : new PassthroughMapper( ix ) ;
+			Mapper mapper ;
+
+			if( from.length()>0 && from.charAt(0) == '@' ) {
+				mapper = externalMappers.get( from.substring(1) ) ;
+			} else {
+				int ix = getInputColumnIndex( inputColumns, from ) ;
+				mapper = ix<0 ? new EmptyMapper() : new PassthroughMapper( ix ) ;
+			}
 			defaultMappers.add( mapper ) ;
 		}
 
@@ -131,13 +147,18 @@ public class MappingTransformer extends Transformer {
 						val = m.replaceFirst( "data[" + ix + "]" ) ;
 					}
 				}
+
+				Mapper mapper ;
 				
-				// Create a new mapper based on the javascript in the value
-				String script = "var obj={ process : function( data ) { " + jsCode + " return " + val + " ; } }" ;
-				engine.eval( script, bindings ) ;
-				Object obj = engine.get( "obj" ) ;
-				Mapper mapper = ((Invocable)engine).getInterface( obj, Mapper.class ) ;
-				
+				if( val.length()>0 && val.charAt(0) == '@' ) {
+					mapper = externalMappers.get( val.substring(1) ) ;
+				} else {					
+					// Create a new mapper based on the javascript in the value
+					String script = "var obj={ process : function( data ) { " + jsCode + " return " + val + " ; } }" ;
+					engine.eval( script, bindings ) ;
+					Object obj = engine.get( "obj" ) ;
+					mapper = ((Invocable)engine).getInterface( obj, Mapper.class ) ;
+				}
 				// And override the default mapping ...  
 				mappers.set( colIndex, mapper ) ;				
 			}
