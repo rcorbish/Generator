@@ -10,6 +10,11 @@
 [sink]
     file        /tmp/xxx
 
+[lookup-tables]
+<mmm>
+    a           1
+    b           hello
+
 [transformer]
     mapping
     <column-names>
@@ -28,5 +33,5 @@
     <receive>
     COL1        row_num+"-rcv"
     COL4        Date.now()
-    COL2		"Receive"
+    COL2		"Receive"+mmm.a
     

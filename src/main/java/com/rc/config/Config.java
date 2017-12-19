@@ -32,6 +32,7 @@ public class Config {
     final private static Logger log = LoggerFactory.getLogger(Config.class);
     final public static String GLOBAL_TRANSFORM = "" ;
     final public static String COLUMN_NAMES = "column-names" ;
+    final public static String LOOKUP_TABLES = "lookup-tables" ;
     
     final Path configFile;
 
@@ -39,6 +40,7 @@ public class Config {
     private Trigger trigger;
     private Sink sink;
     private Transformer transformer;
+    private Map<String,Map<String,String>> lookupTables ;
 
     public Config(Path configFile) {
         this.configFile = configFile;
@@ -110,7 +112,7 @@ public class Config {
                         log.info("Processing subsection {}", subtransform ) ;
                         values = new LinkedHashMap<>() ;
                         valueList.put( subtransform, values ) ;
-                    } else if ( line.charAt(0)=='"' || line.charAt(0)=='\"' ) {
+                    } else if ( line.charAt(0)=='"' || line.charAt(0)=='\'' ) {
                         ix++ ;
                         while (ix < line.length() && line.charAt(ix)!=line.charAt(0) ) {
                             ix++;
@@ -118,7 +120,7 @@ public class Config {
                         key = line.substring(1, ix).trim();
                         value = line.substring(ix+1).trim();
                         values.put(key, value);
-                        log.info( "added {}", key ) ;
+                        log.debug( "added {}", key ) ;
                     } else {
                         while (ix < line.length() && !Character.isWhitespace(line.charAt(ix))) {
                             ix++;
@@ -126,7 +128,7 @@ public class Config {
                         key = line.substring(0, ix).trim();
                         value = line.substring(ix).trim();
                         values.put(key, value);
-                        log.info( "added {}", key ) ;
+                        log.debug( "added {} = {}", key, value ) ;
                     }
                     line = "";
                 }
@@ -142,7 +144,7 @@ public class Config {
     public void processSection(String sectionName, Map<String,LinkedHashMap<String, String>> valueList) throws Exception {
         if (sectionName != null) {
             LinkedHashMap<String, String> values = valueList.get( GLOBAL_TRANSFORM ) ;
-            log.info("Processed {} using {}", sectionName, values);
+            log.debug("Processed {} using {}", sectionName, values);
 
             if ("source".equals(sectionName)) {
                 processSource(values);
@@ -155,6 +157,9 @@ public class Config {
             }
             if ("trigger".equals(sectionName)) {
                 processTrigger(values);
+            }
+            if ("lookup-tables".equals(sectionName)) {
+                processLookupTables(valueList);
             }
         }
     }
@@ -188,11 +193,26 @@ public class Config {
             transformer = new Passthrough();
         }
         if( values.containsKey("mapping" ) ) {
-            transformer = new MappingTransformer( valueList, source.columnNames() ) ;
+            transformer = new MappingTransformer( valueList, lookupTables, source.columnNames() ) ;
         }
     }
 
     public void processTrigger(Map<String, String> values) throws IOException {
         trigger = new TimeTrigger(20, 0, TimeZone.getDefault(), Calendar.SUNDAY);
     }
+
+
+    public void processLookupTables(Map<String, LinkedHashMap<String,String>> valueList ) throws Exception {
+        // LinkedHashMap<String, String> values = valueList.get( LOOKUP_TABLES ) ;
+        log.info( "Saving lookups {}", valueList ) ;
+
+        lookupTables = new HashMap<>() ;
+        for( String key : valueList.keySet() ) {
+            if( GLOBAL_TRANSFORM.equals(key) ) {
+                continue ;
+            }
+            lookupTables.put( key, (Map<String,String>)valueList.get(key).clone() ) ;
+        }
+    }
+
 }

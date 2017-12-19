@@ -36,8 +36,33 @@ public class MappingTransformer extends Transformer {
 
 	final List<List<Mapper>> mapperSet ;
 
-	public MappingTransformer( Map<String,LinkedHashMap<String,String>> columnsMapping, String inputColumns[] ) throws Exception {
+	public MappingTransformer( 
+				Map<String,LinkedHashMap<String,String>> columnsMapping, 
+				Map<String,Map<String,String>> lookupTables, 
+				String inputColumns[] ) throws Exception {
 
+		CharSequence jsCode = "" ;
+		if( lookupTables != null ) {
+			// Make lookupTables into javascript code
+			StringBuilder sb = new StringBuilder() ;
+			for( String lutName: lookupTables.keySet() ) {
+				sb.append( lutName ).append( "={") ;
+				Map<String,String> lut = lookupTables.get(lutName) ;
+				for( String k : lut.keySet() ) {
+					String v = lut.get(k) ;
+					char s1 = '\'' ;
+					char s2 = s1 ;
+					if( k.indexOf(s1) >=0 ) s1 = '\"' ;
+					if( v.indexOf(s2) >=0 ) s2 = '\"' ;
+					sb.append( s1 ).append( k ).append( s1 ).append(":").append(s2).append(v).append(s2).append(',') ;
+				}
+				sb.setCharAt( sb.length()-1, '}' ) ;
+				sb.append( ';' ) ;
+			}
+			jsCode = sb ;
+			log.debug( "JS map code   {}", sb ) ;
+		}
+		// Prepare the javascript environment
 		sem = new ScriptEngineManager() ;
 		engine = sem.getEngineByName("js") ;
 		bindings = engine.createBindings() ;
@@ -108,7 +133,7 @@ public class MappingTransformer extends Transformer {
 				}
 				
 				// Create a new mapper based on the javascript in the value
-				String script = "var obj={ process : function( data ) { return " + val + " ; } }" ;
+				String script = "var obj={ process : function( data ) { " + jsCode + " return " + val + " ; } }" ;
 				engine.eval( script, bindings ) ;
 				Object obj = engine.get( "obj" ) ;
 				Mapper mapper = ((Invocable)engine).getInterface( obj, Mapper.class ) ;
@@ -159,6 +184,4 @@ public class MappingTransformer extends Transformer {
 		log.info( "Processed {} lines in {}mS [ {} lines/sec ]", rowNum, delta, (rowNum * 1000) / delta ) ;
 		sink.footer( "" );
 	}
-
-
 }

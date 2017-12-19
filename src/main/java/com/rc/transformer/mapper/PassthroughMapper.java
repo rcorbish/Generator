@@ -1,6 +1,8 @@
 
 package com.rc.transformer.mapper ;
 
+import java.util.Date;
+
 public class PassthroughMapper implements Mapper {
 
 	final int sourceIndex ;
@@ -10,7 +12,11 @@ public class PassthroughMapper implements Mapper {
 	}
 	
     public String process( Object data[] ) {
-    	return data[sourceIndex] == null ? "" : data[sourceIndex].toString() ;
+		Object o = data[sourceIndex] ;
+		if( o instanceof Date ) {
+			// format a date
+		}
+    	return o == null ? "" : o.toString() ;
     }
     
 }
