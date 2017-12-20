@@ -193,7 +193,8 @@ public class MappingTransformer extends Transformer {
 		for( List<Mapper> mappers : mapperSet ) {
 			StringBuilder sb = new StringBuilder("\"") ;
 			for( Mapper mapper : mappers ) {
-				CharSequence colValue = mapper.process( data ) ;
+				Object o = mapper.process( data ) ;
+				CharSequence colValue = o == null ? "" : o.toString() ;
 				sb.append( "|\"").append( colValue ).append( "\"" ) ;
 			}
             rc[csIndex] = sb ;

@@ -8,6 +8,6 @@ package com.rc.transformer.mapper ;
 @FunctionalInterface
 public interface Mapper {
 
-    public CharSequence process( Object data[] ) ;
+    public Object process( Object data[] ) ;
     
 }

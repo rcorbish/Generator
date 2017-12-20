@@ -5,6 +5,7 @@
 .settings/
 bin/
 build/
+target/
 libs/
 sync.sh
 

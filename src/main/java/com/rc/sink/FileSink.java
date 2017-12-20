@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.Optional;
 
 import org.slf4j.Logger;
@@ -38,6 +39,7 @@ public class FileSink implements Sink {
     @Override
     public void header( CharSequence data ) {
     	try {	
+    		out = Files.newBufferedWriter( output ) ;
 			out.append( data ) ;
 			out.newLine() ;
 		} catch (IOException e) {
@@ -59,6 +61,8 @@ public class FileSink implements Sink {
     public void footer( CharSequence data ) {
     	try {
 			out.append( data ) ;
+			out.flush();
+			out.close();
 		} catch (IOException e) {
 			log.error( "Failed to write footer to ()", output, e ) ;
 		}
