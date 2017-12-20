@@ -70,7 +70,7 @@ public class MappingTransformer extends Transformer {
 				sb.append( ';' ) ;
 			}
 			jsCode = sb ;
-			log.info( "JS map code   {}", sb ) ;
+			log.debug( "JS map code   {}", sb ) ;
 		}
 		// Prepare the javascript environment
 		sem = new ScriptEngineManager() ;
