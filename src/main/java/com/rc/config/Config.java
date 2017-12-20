@@ -43,7 +43,8 @@ public class Config {
     final public static String EXTERN_CLASSeS = "extern" ;
     
     final Path configFile;
-
+    final Path scriptDir;
+    
     private Source source;
     private Trigger trigger;
     private Sink sink;
@@ -51,8 +52,9 @@ public class Config {
     private Map<String,Map<String,String>> lookupTables ;
     private Map<String,Mapper> externalClasses ;
     
-    public Config(Path configFile) {
+    public Config(Path configFile, Path scriptDir ) {
         this.configFile = configFile;
+        this.scriptDir  = scriptDir ;
     }
 
     public Processor createProcessor() throws IOException, ParseException {
@@ -207,7 +209,7 @@ public class Config {
             transformer = new Passthrough();
         }
         if( values.containsKey("mapping" ) ) {
-            transformer = new MappingTransformer( valueList, lookupTables, externalClasses, source.columnNames() ) ;
+            transformer = new MappingTransformer( valueList, lookupTables, externalClasses, source.columnNames(), scriptDir ) ;
         }
     }
 
@@ -215,7 +217,7 @@ public class Config {
         trigger = new TimeTrigger(20, 0, TimeZone.getDefault(), Calendar.SUNDAY);
     }
 
-
+    @SuppressWarnings("unchecked")
     public void processLookupTables(Map<String, LinkedHashMap<String,String>> valueList ) throws Exception {
         // LinkedHashMap<String, String> values = valueList.get( LOOKUP_TABLES ) ;
         log.info( "Saving lookups {}", valueList ) ;
@@ -231,6 +233,7 @@ public class Config {
     }
 
 
+    @SuppressWarnings("unchecked")
     public void processExternalClasses(Map<String, LinkedHashMap<String,String>> valueList ) throws Exception {
         // LinkedHashMap<String, String> values = valueList.get( LOOKUP_TABLES ) ;
         log.info( "Finding externals {}", valueList ) ;
@@ -259,6 +262,27 @@ public class Config {
                 engine.setBindings(bindings, ScriptContext.ENGINE_SCOPE );
         
                 String script = "var obj={ process : function( data ) {" + cfg.get( "script" ) +"}}" ;
+                				// Create a new mapper based on the javascript in the value
+				engine.eval( script, bindings ) ;
+				Object obj = engine.get( "obj" ) ;
+				mapperInstance = ((Invocable)engine).getInterface( obj, Mapper.class ) ;
+            }
+            if( cfg.containsKey( "script-file" ) ) {
+
+                Path scriptFile = scriptDir.resolve( cfg.get("script-file") ) ;
+                byte rawScript[] = Files.readAllBytes(scriptFile) ;
+                String scriptText = new String( rawScript, "UTF-8" ) ;
+
+                final ScriptEngineManager sem ;
+                final ScriptEngine engine ;
+                final Bindings bindings ;
+            
+                sem = new ScriptEngineManager() ;
+                engine = sem.getEngineByName("js") ;
+                bindings = engine.createBindings() ;
+                engine.setBindings(bindings, ScriptContext.ENGINE_SCOPE );
+        
+                String script = "var obj={ process : function( data ) {" + scriptText + "}}" ;
                 				// Create a new mapper based on the javascript in the value
 				engine.eval( script, bindings ) ;
 				Object obj = engine.get( "obj" ) ;

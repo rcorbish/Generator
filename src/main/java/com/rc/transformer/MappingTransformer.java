@@ -2,6 +2,7 @@
 
 package com.rc.transformer ;
 
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -27,7 +28,8 @@ public class MappingTransformer extends Transformer {
 
 	final private static Logger log = LoggerFactory.getLogger(MappingTransformer.class);
 	final private String columnNames[] ;
-
+	final private Path scriptDir ;
+	
 	final private ScriptEngineManager sem ;
 	final private ScriptEngine engine ;
 	final private Bindings bindings ;
@@ -40,8 +42,10 @@ public class MappingTransformer extends Transformer {
 				Map<String,LinkedHashMap<String,String>> columnsMapping, 
 				Map<String,Map<String,String>> lookupTables, 
 				Map<String,Mapper> externalMappers,
-				String inputColumns[] ) throws Exception {
+				String inputColumns[],
+				Path scriptDir ) throws Exception {
 
+		this.scriptDir = scriptDir ;
 		CharSequence jsCode = "" ;
 		if( lookupTables != null ) {
 			// Make lookupTables into javascript code

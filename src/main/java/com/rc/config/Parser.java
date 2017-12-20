@@ -8,16 +8,16 @@ import java.util.stream.Collectors;
 
 public class Parser {
 
-    public List<Config> parse( Path directory ) throws IOException {
+    public List<Config> parse( Path directory, Path scriptDir ) throws IOException {
         return Files.list( directory )
             .filter( this::isConfigFile )
-            .map( this::parseConfig )
+            .map( e -> parseConfig(e,scriptDir) )
             .collect( Collectors.toList() )
         ;
     }
 
-    private Config parseConfig( Path configFile ) {
-        Config rc = new Config( configFile ) ;
+    private Config parseConfig( Path configFile, Path scriptDir ) {
+        Config rc = new Config( configFile, scriptDir ) ;
         return rc ;
     }
 

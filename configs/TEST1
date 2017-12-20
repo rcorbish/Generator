@@ -17,8 +17,12 @@
     b           hello
 
 [extern]
+
 <function1>
-    script      return data[0].length / 1000
+    script      return data.length / 1000
+
+<function2>
+    script-file f2.js
 
 [transformer]
     mapping
@@ -33,7 +37,7 @@
     COL3		"Boo Ya"
     <pay>
     COL1        row_num+"-pay"
-    COL4        @function1
+    COL4        @function2
     COL2		"Pay"
     <receive>
     COL1        row_num+"-rcv"

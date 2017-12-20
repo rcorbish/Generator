@@ -39,7 +39,7 @@ public class Main {
 
 			// get config
 			Parser parser = new Parser();
-			List<Config> configs = parser.parse(options.configDir);
+			List<Config> configs = parser.parse(options.configDir, options.scriptDir );
 
 			// create Sinks, Sources & Processors
 			for (Config config : configs) {
@@ -86,6 +86,7 @@ class Options {
 
 	int port = 8111;
 	Path configDir = null;
+	Path scriptDir = null;
 	String execProcesses[];
 	int numberThreads = 1;
 
@@ -95,11 +96,9 @@ class Options {
 		OptionParser parser = new OptionParser();
 		parser.accepts("port", "Port number for website, default 8111").withRequiredArg().ofType(Integer.class);
 		parser.accepts("config-dir", "Directory for config files").withRequiredArg().ofType(String.class);
-		;
+		parser.accepts("script-dir", "Directory for scripts").withRequiredArg().ofType(String.class);
 		parser.accepts("exec", "Request immediate execution of a named process (repeatable)").withRequiredArg().ofType(String.class);
-		;
 		parser.accepts("concurrency", "Number of concurrent processors, default=1").withRequiredArg().ofType(Integer.class);
-		;
         parser.accepts( "help", "This help" ).forHelp();
         
 		OptionSet os = parser.parse(args);
@@ -112,7 +111,12 @@ class Options {
 		if (os.has("config-dir")) {
 			configDir = Paths.get((String) os.valueOf("config-dir"));
 		} else {
-			configDir = Paths.get(".");
+			configDir = Paths.get("configs");
+		}
+		if (os.has("script-dir")) {
+			scriptDir = Paths.get((String) os.valueOf("script-dir"));
+		} else {
+			scriptDir = Paths.get("scripts");
 		}
 		if (os.has("exec")) {
 			List<?> tmp = os.valuesOf("exec");

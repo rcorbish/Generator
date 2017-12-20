@@ -6,7 +6,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
 import java.util.Optional;
 
 import org.slf4j.Logger;
@@ -33,6 +32,27 @@ public class FileSink implements Sink {
 
 		}
 		return null ;
+	}
+
+	static Path LargestSequencedFile( Path a, Path b ) {
+		int sequenceNumA = -1 ;
+		int sequenceNumB = -1 ;
+		try {
+			String fnA = a.getFileName().toString() ;
+			int ixA = fnA.lastIndexOf('.') ;
+			sequenceNumA = Integer.parseInt( fnA.substring(ixA+1) ) ;
+		} catch( Exception e ) {
+			log.warn( "Error checking most recent file - {}", a, e ) ;
+		}
+		try {
+			String fnB = b.getFileName().toString() ;
+			int ixB = fnB.lastIndexOf('.') ;
+			sequenceNumB = Integer.parseInt( fnB.substring(ixB+1) ) ;
+		} catch( Exception e ) {
+			log.warn( "Error checking most recent file - {}", b, e ) ;
+		}
+	
+		return sequenceNumA > sequenceNumB ? a : b ;
 	}
 
 
@@ -78,10 +98,14 @@ public class FileSink implements Sink {
 		return output ;
 	}
 
+	/**
+	 * Finds a filename using a pattern of /d1/d2/f1.ext.0001
+	 * The most file with largest sequence  is used - NOT the most recently edited
+	 */
 	public static Path getFileNameFromDir( String fileName ) throws IOException {
 		Path output = Paths.get( fileName ) ;		
 		Files.createDirectories( output ) ;
-		Optional<Path> p = Files.list( output ).reduce( (a,b) -> FileSink.MostRecentFile(a,b) ) ;
+		Optional<Path> p = Files.list( output ).reduce( (a,b) -> FileSink.LargestSequencedFile(a,b) ) ;
 		log.info( "Found most recent file: {}", p.isPresent()?p.get():"-" ) ;
 		int sequenceNum = 0 ;
 		if( p.isPresent() ) {
