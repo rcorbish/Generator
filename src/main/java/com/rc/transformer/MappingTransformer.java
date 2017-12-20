@@ -131,7 +131,7 @@ public class MappingTransformer extends Transformer {
 				// by replacing that text with data[n]  ( n = appropriate input column index )  
 				Matcher m = colRef.matcher(val) ;
 				while( m.find() ) {
-					String lookedUpColumn = m.group(1) ;
+                    String lookedUpColumn = m.group(1) ;
 					String inputColumn = colNameMap.getOrDefault(lookedUpColumn, "" ) ;
 					
 					int inputColIndex = -1 ;
@@ -143,6 +143,7 @@ public class MappingTransformer extends Transformer {
 						}
 						ix++ ;
 					}
+                    log.debug( "Matched {} = {}[{}]", lookedUpColumn, (Object[])inputColumns, inputColIndex) ;
 					if( inputColIndex>=0 ) {
 						val = m.replaceFirst( "data[" + ix + "]" ) ;
 					}
@@ -181,18 +182,24 @@ public class MappingTransformer extends Transformer {
 	}
 	
 	// call each mapper defined by the constructor
-	// and send the result to the consumer
-	public void process( Object data[] ) {
+    // and send the result to the consumer
+    @Override
+	public CharSequence[] convert( Object data[] ) {
 		rowNum++ ;
-		bindings.put( "row_num", rowNum ) ;
+        bindings.put( "row_num", rowNum ) ;
+        CharSequence rc[] = new CharSequence[ mapperSet.size() ] ;
+
+        int csIndex = 0 ;
 		for( List<Mapper> mappers : mapperSet ) {
 			StringBuilder sb = new StringBuilder("\"") ;
 			for( Mapper mapper : mappers ) {
-				String colValue = mapper.process( data ) ;
+				CharSequence colValue = mapper.process( data ) ;
 				sb.append( "|\"").append( colValue ).append( "\"" ) ;
 			}
-			sink.consume( sb );
-		}
+            rc[csIndex] = sb ;
+            csIndex++ ;
+        }
+        return rc ;
 	}
 
 	public void preProcess() {

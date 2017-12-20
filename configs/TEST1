@@ -4,11 +4,12 @@
     days        Mon,Wed,Fri
 
 [source]
+    file		/etc/passwd
+    separator	:
     sql         select * from dm.trade
-    connection 
 
 [sink]
-    file        /tmp/xxx
+    file		/tmp/xxx
 
 [lookup-tables]
 <mmm>
@@ -27,7 +28,7 @@
     COL3        @function1
     COL4        
     <parent>
-    COL2        row_num
+    COL2        row_num 
     COL4        Date.now()
     COL3		"Boo Ya"
     <pay>

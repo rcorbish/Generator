@@ -118,7 +118,7 @@ public class Config {
                             ix++;
                         }
                         String subtransform = line.substring(1, ix).trim() ;
-                        log.info("Processing subsection {}", subtransform ) ;
+                        log.debug("Processing subsection {}", subtransform ) ;
                         values = new LinkedHashMap<>() ;
                         valueList.put( subtransform, values ) ;
                     } else if ( line.charAt(0)=='"' || line.charAt(0)=='\'' ) {
@@ -177,7 +177,9 @@ public class Config {
     }
 
     public void processSource(Map<String, String> values) throws IOException, ParseException {
-        source = new FileSource(Paths.get("/etc/passwd"), ":");
+        source = new FileSource(Paths.get("/etc/passwd"), 
+                        ":", 
+                        new String[]{ "user", "x", "uid", "gid", "name","home", "shell" } );
     }
 
     public void processSink(Map<String, String> values) throws IOException, ParseException {
